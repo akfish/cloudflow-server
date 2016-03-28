@@ -1,0 +1,35 @@
+{
+  "clean:default": {
+    "taskName": "clean",
+    "src": [
+      "./lib"
+    ],
+    "opts": {
+      "force": false,
+      "dryRun": false
+    }
+  },
+  "es6:default": {
+    "taskName": "es6",
+    "src": [
+      "./src/**/*.es6"
+    ],
+    "dst": "./lib",
+    "sourceMap": true,
+    "_useBabelRc": true,
+    "opts": {
+      "presets": [
+        "es2015"
+      ]
+    }
+  },
+  "cli:default": {
+    "opts": {
+      "mapping": {
+        "GLOBAL": {
+          "sourceMap": "debug"
+        }
+      }
+    }
+  }
+}
