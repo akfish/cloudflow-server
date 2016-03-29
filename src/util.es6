@@ -40,7 +40,6 @@ export function cropFrame (frame, rect) {
   let strides = []
   for (let y = top; y < top + height; y++) {
     let offset = y * w * 3 + left * 3
-    // console.log(offset + left * 3, width * 3)
     strides.push(pixels.slice(offset, offset + width * 3))
   }
   return {
