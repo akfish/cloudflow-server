@@ -1,16 +1,20 @@
 import Promise from 'bluebird'
 import fetch from 'node-fetch'
-import { URL, REGEX } from './consts'
-import { matchAll } from './util'
+import { URL, REGEX } from '../consts'
+import { matchAll } from '../util'
 import _ from 'underscore'
+const fs = Promise.promisifyAll(require('fs'))
 
 function parseImages (text) {
-  let images = matchAll(REGEX.IMAGE, text, ['url', 'YYYY', 'MM', 'DD', 'HH', 'mm'])
+  let images = matchAll(REGEX.IMAGE, text, ['url', 'YYYY', 'MM', 'DD', 'HH', 'mm'], Image)
+
+  images.forEach((image) => image.url = URL.resolveImage(image.url))
+
   return images
 }
 
 function parseStations (text) {
-  let stations = _.chain(matchAll(REGEX.STATION, text, ['url', 'name', 'name_cn']))
+  let stations = _.chain(matchAll(REGEX.STATION, text, ['url', 'name', 'name_cn'], Station))
     .filter(({name}) => name !== 'index')
     .uniq(({name_cn}) => name_cn)
     .each((station) => {
@@ -32,7 +36,7 @@ async function fetchPage (url) {
   return { url, stations, images }
 }
 
-export async function getAllStations () {
+async function getAllStations () {
   let queue = [URL.INDEX]
   let visited = {}
   let images = {}
@@ -64,4 +68,37 @@ export async function getAllStations () {
   all.forEach((station) => station.images = images[station.url])
 
   return all
+}
+
+class Model {
+  constructor (payload) {
+    _.extend(this, payload)
+  }
+}
+
+export class Station extends Model {
+  static async listAll () {
+    return getAllStations()
+  }
+  static async list (url) {
+    return fetchPage(url)
+  }
+}
+
+export class Image extends Model {
+  static async load (url) {
+    return new Image({ url }).load()
+  }
+  static async loadFromFile (file) {
+    let img = new Image({ url: file })
+    img.stream = fs.createReadStream(file)
+    return img
+  }
+  async load () {
+    let res = await fetch(this.url)
+
+    this.stream = res.body
+
+    return this
+  }
 }
