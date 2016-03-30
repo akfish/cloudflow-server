@@ -1,8 +1,11 @@
 import GIFEncoder from 'gif-stream/encoder'
 import neuquant from 'neuquant'
+import path from 'path'
+
 export default class GIF {
   static encode (key, storage, image) {
     let frame = image[key]
+    let { dir, name } = image.file
     let { palette, width, height, pixels } = frame
 
     let indexed = pixels
@@ -14,7 +17,9 @@ export default class GIF {
     }
 
     let enc = new GIFEncoder(frame.width, frame.height, { palette })
-    enc.pipe(storage.createWriteStream(`c-${key}.gif`))
+    let output = path.join(dir, `${name}-${key}.gif`)
+    enc.pipe(storage.createWriteStream(output))
     enc.end(indexed)
+    console.log(`[Encoder.GIF] ${output}`)
   }
 }

@@ -1,9 +1,12 @@
 import Promise from 'bluebird'
 import _ from 'underscore'
+import url from 'url'
+import path from 'path'
 const fs = Promise.promisifyAll(require('fs'))
+const mkdirp = Promise.promisify(require('mkdirp'))
 
 export default class FileStorage {
-  constructor (base) {
+  constructor (base = __dirname) {
     this.base = base
     _.bindAll(this, 'createWriteStream', 'exists', 'writeOne')
   }
@@ -15,7 +18,9 @@ export default class FileStorage {
     return false
   }
   async writeOne (image) {
-    // TODO: resolve image paths
+    let file = path.parse(path.join(this.base, url.parse(image.url).pathname))
+    image.file = file
+    await mkdirp(file.dir)
     await Promise.map(image.encoders, (encode) => encode(this, image))
     return image
   }

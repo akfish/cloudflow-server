@@ -7,3 +7,10 @@ export function encodeWith (key, encoder) {
     return image
   }
 }
+
+export function encodeAllWith (key, encoder) {
+  return (images) => {
+    let _encodeWith = encodeWith(key, encoder)
+    images.forEach((image) => _encodeWith(image))
+  }
+}

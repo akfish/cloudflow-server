@@ -137,7 +137,6 @@ class Frame {
         })
 
         patched[i] = Math.ceil(fix / (count > 0 ? count : 1))
-        console.log(N8, patched[i])
       }
     }
     return new Frame(_.extend({ pixels: patched }, _.omit(this, 'pixels')))
@@ -149,6 +148,7 @@ export default class Processor {
     _.bindAll(this, 'processOne', 'process')
   }
   async processOne (image) {
+    console.log(`[Processing] ${image.url}`)
     let raw = image.raw
     let frame = image.frame = new Frame(raw).crop()
     let { data, grid } = frame.reindex()
@@ -157,7 +157,7 @@ export default class Processor {
     image.grid = grid
 
     image.patched = data.patch(grid)
-    console.log(image.patched)
+    console.log(`[Processed] ${image.url}`)
 
     return image
   }

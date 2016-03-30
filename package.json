@@ -25,6 +25,7 @@
     "bluebird": "^3.3.4",
     "concat-frames": "^1.0.3",
     "gif-stream": "^1.1.0",
+    "mkdirp": "^0.5.1",
     "neuquant": "^1.0.2",
     "node-fetch": "^1.4.1"
   }

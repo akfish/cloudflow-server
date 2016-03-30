@@ -95,9 +95,11 @@ export class Image extends Model {
     return img
   }
   async load () {
+    console.log(`[Loading] ${this.url}`)
     let res = await fetch(this.url)
 
     this.stream = res.body
+    console.log(`[Loaded] ${this.url}`)
 
     return this
   }
