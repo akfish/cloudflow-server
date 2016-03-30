@@ -95,6 +95,53 @@ class Frame {
 
     return { data: dataFrame, grid: gridFrame }
   }
+
+  patch (maskFrame) {
+    console.assert(maskFrame.width === this.width && maskFrame.height === this.height)
+    console.assert(maskFrame.colorSpace === this.colorSpace)
+
+    let { height, width, pixels: data } = this
+    let { pixels: mask } = maskFrame
+
+    let patched = new Buffer(data.length)
+
+    data.copy(patched)
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        let i = y * width + x
+        let m = mask[i]
+        // Not missing
+        if (m === 0) continue
+        let N8 = [
+          data[(y - 1) * width + x - 1],
+          data[(y - 1) * width + x],
+          data[(y - 1) * width + x + 1],
+          data[y * width + x + 1],
+          data[(y + 1) * width + x + 1],
+          data[(y + 1) * width + x],
+          data[(y + 1) * width + x - 1],
+          data[y * width + x - 1]
+        ]
+        let [NW, N, NE, E, SE, S, SW, W] = N8
+
+        // No N4 neighbour, skip
+        if (N === 0 && E === 0 && W === 0 && S === 0) continue
+        if (N >= 16 && E >= 16 && W >= 16 && S >= 16) continue
+
+        let fix = 0
+        let count = 0
+        N8.forEach((n, i) => {
+          if (n >= 16) return
+          fix += n
+          count++
+        })
+
+        patched[i] = Math.ceil(fix / (count > 0 ? count : 1))
+        console.log(N8, patched[i])
+      }
+    }
+    return new Frame(_.extend({ pixels: patched }, _.omit(this, 'pixels')))
+  }
 }
 
 export default class Processor {
@@ -108,6 +155,9 @@ export default class Processor {
 
     image.data = data
     image.grid = grid
+
+    image.patched = data.patch(grid)
+    console.log(image.patched)
 
     return image
   }

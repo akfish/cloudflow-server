@@ -26,6 +26,7 @@ Image.loadFromFile('./SEVP_AOC_RDCP_SLDAS_EBREF_AZ9010_L88_PI_20160328153500000.
   .then(encodeWith('frame', GIFEncoder))
   .then(encodeWith('data', GIFEncoder))
   .then(encodeWith('grid', GIFEncoder))
+  .then(encodeWith('patched', GIFEncoder))
   .then(storage.writeOne)
 
 // Station.listAll()
