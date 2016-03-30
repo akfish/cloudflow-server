@@ -21,9 +21,10 @@ Image.loadFromFile('./SEVP_AOC_RDCP_SLDAS_EBREF_AZ9010_L88_PI_20160328153500000.
   .then(decodeWith(GIFDecoder))
   .then(processor.processOne)
   .tap((img) => {
-    console.log(img)
+    // console.log(img)
   })
-  .then(encodeWith(GIFEncoder))
+  .then(encodeWith('indexed', GIFEncoder))
+  .then(encodeWith('grid', GIFEncoder))
   .then(storage.writeOne)
 
 // Station.listAll()

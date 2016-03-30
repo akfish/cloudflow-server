@@ -22,6 +22,7 @@ export default class Processor {
     let { palette, pixels } = frame
 
     let indexed = new Buffer(pixels.length / 3)
+    let grid = new Buffer(pixels.length / 3)
 
     for (var i = 0; i < pixels.length; i += 3) {
       let r = pixels[i]
@@ -30,10 +31,18 @@ export default class Processor {
       let v = r << 16 | g << 8 | b
       let j = PALETTE.indexOf(v)
       console.assert(j >= 0)
-      indexed.writeUInt8(j, i / 3)
+      if (j < 16) {
+        // TODO: update bounding box
+        indexed.writeUInt8(j, i / 3)
+        grid.writeUInt8(0, i / 3)
+      } else {
+        indexed.writeUInt8(0, i / 3)
+        grid.writeUInt8(j, i / 3)
+      }
     }
 
     frame.indexed = indexed
+    frame.grid = grid
     frame.palette = PALETTE_BUFFER
 
     return frame

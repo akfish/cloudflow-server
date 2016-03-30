@@ -16,7 +16,7 @@ export default class FileStorage {
   }
   async writeOne (image) {
     // TODO: resolve image paths
-    await Promise.map(image.encoders, (encoder) => encoder.encode(this, image))
+    await Promise.map(image.encoders, (encode) => encode(this, image))
     return image
   }
   async write (images) {
