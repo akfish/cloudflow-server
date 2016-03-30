@@ -23,7 +23,8 @@ Image.loadFromFile('./SEVP_AOC_RDCP_SLDAS_EBREF_AZ9010_L88_PI_20160328153500000.
   .tap((img) => {
     // console.log(img)
   })
-  .then(encodeWith('indexed', GIFEncoder))
+  .then(encodeWith('frame', GIFEncoder))
+  .then(encodeWith('data', GIFEncoder))
   .then(encodeWith('grid', GIFEncoder))
   .then(storage.writeOne)
 

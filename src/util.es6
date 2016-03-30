@@ -32,23 +32,14 @@ export function streamToPromise (stream) {
   })
 }
 
-export function cropFrame (frame, rect) {
+export function cropPixels (pixels, w, h, rect, dimension = 3) {
   // Assume frame.colorSpace === 'rgb'
-  let { width: w, height: h, palette, pixels, colorSpace } = frame
-  console.assert(colorSpace === 'rgb')
+  console.log(rect)
   let [ left, top, width, height ] = rect
   let strides = []
   for (let y = top; y < top + height; y++) {
-    let offset = y * w * 3 + left * 3
-    strides.push(pixels.slice(offset, offset + width * 3))
+    let offset = y * w * dimension + left * dimension
+    strides.push(pixels.slice(offset, offset + width * dimension))
   }
-  return {
-    x: 0,
-    y: 0,
-    width,
-    height,
-    colorSpace,
-    palette,
-    pixels: Buffer.concat(strides)
-  }
+  return Buffer.concat(strides)
 }

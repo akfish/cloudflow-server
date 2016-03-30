@@ -1,12 +1,14 @@
 import GIFEncoder from 'gif-stream/encoder'
 import neuquant from 'neuquant'
 export default class GIF {
-  static encode (key, storage, { frame }) {
-    let { palette, width, height } = frame
-    let indexed = frame[key]
+  static encode (key, storage, image) {
+    let frame = image[key]
+    let { palette, width, height, pixels } = frame
 
-    if (!indexed || indexed.length !== width * height) {
-      let q = neuquant.quantize(indexed || frame.pixels)
+    let indexed = pixels
+
+    if (frame.colorSpace !== 'index' || pixels.length !== width * height) {
+      let q = neuquant.quantize(pixels)
       palette = q.palette
       indexed = q.indexed
     }
