@@ -1,9 +1,19 @@
 import Promise from 'bluebird'
 import fetch from 'node-fetch'
 import { URL, REGEX } from '../consts'
-import { matchAll } from '../util'
+import { matchAll, retry } from '../util'
+import { getOptions } from '../options'
 import _ from 'underscore'
-const fs = Promise.promisifyAll(require('fs'))
+const fs = Promise.promisifyAll(require('graceful-fs'))
+
+export function tryFetchText (url, opts) {
+  let { retry: maxRetry, timeout } = opts = _.defaults({}, opts, { retry: 0, timeout: 0 })
+
+  return retry(() =>
+    fetch(url, opts)
+      .then((res) => res.text())
+  , maxRetry)
+}
 
 function parseImages (text) {
   let images = matchAll(REGEX.IMAGE, text, ['url', 'YYYY', 'MM', 'DD', 'HH', 'mm'], Image)
@@ -26,8 +36,7 @@ function parseStations (text) {
 
 async function fetchPage (url) {
   console.log(`[Fecth] ${url}`)
-  let res = await fetch(url)
-  let text = await res.text()
+  let text = await tryFetchText(url, getOptions())
 
   console.log(`[Fetched] ${url}`)
   let stations = parseStations(text)
@@ -96,9 +105,12 @@ export class Image extends Model {
   }
   async load () {
     console.log(`[Loading] ${this.url}`)
-    let res = await fetch(this.url)
+    let res = await fetch(this.url, getOptions())
 
     this.stream = res.body
+
+    console.assert(this.stream._readableState.length > 0, 'Empty response')
+
     console.log(`[Loaded] ${this.url}`)
 
     return this

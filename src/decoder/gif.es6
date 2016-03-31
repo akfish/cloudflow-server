@@ -5,13 +5,16 @@ import ConcatFrames from 'concat-frames'
 export default class GIF {
   static async decode (image) {
     let frames = await new Promise((resolve, reject) => {
+      function onError (e) {
+        console.log(`[Decoder.GIF Error] ${image.url}`)
+        reject(e)
+      }
       console.log(`[Decoder.GIF Start] ${image.url}`)
-      image.stream.pipe(new GIFDecoder())
+      let decoder = new GIFDecoder()
+      decoder.on('error', onError)
+      image.stream.pipe(decoder)
         .pipe(ConcatFrames(resolve))
-        .on('error', (e) => {
-          console.log(`[Decoder.GIF Error] ${image.url}`)
-          reject(e)
-        })
+        .on('error', onError)
     })
 
     image.raw = frames[0]

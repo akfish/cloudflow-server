@@ -34,7 +34,10 @@ export const PALETTE = [
   0x780084,
   0xad90f0,
   0x206060,
-  0x000080
+  0x000080,
+  0x000000,
+  0xFFFFFF,
+  0xDEADED,
 ]
 
 export const PALETTE_BUFFER = (() => {

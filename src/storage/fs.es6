@@ -2,7 +2,8 @@ import Promise from 'bluebird'
 import _ from 'underscore'
 import url from 'url'
 import path from 'path'
-const fs = Promise.promisifyAll(require('fs'))
+import { retry } from '../util'
+const fs = Promise.promisifyAll(require('graceful-fs'))
 const mkdirp = Promise.promisify(require('mkdirp'))
 
 export default class FileStorage {
@@ -11,16 +12,27 @@ export default class FileStorage {
     _.bindAll(this, 'createWriteStream', 'exists', 'writeOne')
   }
   createWriteStream (filename) {
-    // TODO: resolve against base
     return fs.createWriteStream(filename)
   }
-  async exists (image) {
-    return false
-  }
-  async writeOne (image) {
+  resolve (image) {
+    if (typeof image.file === 'object') return
     let file = path.parse(path.join(this.base, url.parse(image.url).pathname))
     image.file = file
-    await mkdirp(file.dir)
+  }
+  async exists (image) {
+    this.resolve(image)
+    let { dir, name } = image.file
+    let output = path.join(dir, `${name}-frame.gif`)
+    try {
+      let stat = await fs.statAsync(output)
+      return stat.isFile()
+    } catch (e) {
+      return false
+    }
+  }
+  async writeOne (image) {
+    this.resolve(image)
+    await mkdirp(image.file.dir)
     await Promise.map(image.encoders, (encode) => encode(this, image))
     return image
   }

@@ -13,9 +13,16 @@ export default class Delta {
       .flatten()
       .value()
 
+    let checked = 0
     return Promise.filter(images, async (image) => {
-      let exists = await storage.exists(image)
-      return !exists
-    })
+      try {
+        let exists = await storage.exists(image)
+        checked++
+        return !exists
+      } catch (e) {
+        console.log(checked)
+        throw e
+      }
+    }, { concurrency: 10 })
   }
 }

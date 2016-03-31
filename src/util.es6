@@ -34,7 +34,6 @@ export function streamToPromise (stream) {
 
 export function cropPixels (pixels, w, h, rect, dimension = 3) {
   // Assume frame.colorSpace === 'rgb'
-  console.log(rect)
   let [ left, top, width, height ] = rect
   let strides = []
   for (let y = top; y < top + height; y++) {
@@ -42,4 +41,22 @@ export function cropPixels (pixels, w, h, rect, dimension = 3) {
     strides.push(pixels.slice(offset, offset + width * dimension))
   }
   return Buffer.concat(strides)
+}
+
+export async function retry (fn, count) {
+  let tried = 0
+
+  if (count === 0) return await fn()
+
+  while (tried < count) {
+    try {
+      if (tried > 0) console.log(`Retry ${tried}/${count}`)
+      return await fn()
+    } catch (e) {
+      tried++
+      console.error(`[Error] `, e)
+    }
+  }
+
+  throw new Error('Maxiumum retry count exceeded')
 }

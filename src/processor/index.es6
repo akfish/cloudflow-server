@@ -5,7 +5,6 @@ import GIFDecoder from 'gif-stream/decoder'
 import ConcatFrames from 'concat-frames'
 import { cropPixels } from '../util'
 import { ROI, PALETTE, PALETTE_BUFFER } from '../consts'
-import fs from 'fs'
 import _ from 'underscore'
 
 class Frame {
@@ -15,6 +14,7 @@ class Frame {
   crop (roi) {
     let { colorSpace, palette, pixels, width, height } = this
     roi = roi || ROI[`${width}x${height}`]
+    console.assert(typeof roi === 'object')
 
     pixels = cropPixels(pixels, width, height, roi)
 
@@ -47,7 +47,7 @@ class Frame {
       let j = PALETTE.indexOf(v)
       let x = i / 3 % width
       let y = ~~ (i / 3 / width)
-      console.assert(j >= 0)
+      console.assert(j >= 0, `Unknown color: ${r}, ${g}, ${b} at (${x}, ${y})`)
       indexed.writeUInt8(j, i / 3)
       if (j < 16) {
         if (j > 0) {
@@ -66,7 +66,7 @@ class Frame {
       }
     }
 
-    this.colorSpace = 'index'
+    this.colorSpace = 'indexed'
     this.pixels = indexed
     this.palette = PALETTE_BUFFER
 
@@ -79,7 +79,7 @@ class Frame {
       y: top,
       width: right - left,
       height: bottom - top,
-      colorSpace: 'index',
+      colorSpace: 'indexed',
       palette: PALETTE_BUFFER
     }
 
@@ -156,7 +156,8 @@ export default class Processor {
     image.data = data
     image.grid = grid
 
-    image.patched = data.patch(grid)
+    image.patched = (data && grid) ? data.patch(grid) : null
+    if (!data) console.log(`[Process] SKIP ${image.url} appears to be empty`)
     console.log(`[Processed] ${image.url}`)
 
     return image
