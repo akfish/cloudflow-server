@@ -6,10 +6,10 @@ export default class GIF {
   static async decode (image) {
     let frames = await new Promise((resolve, reject) => {
       function onError (e) {
-        console.log(`[Decoder.GIF Error] ${image.url}`)
+        console.log(`[Decoder.GIF Error] ${image}`)
         reject(e)
       }
-      console.log(`[Decoder.GIF Start] ${image.url}`)
+      console.log(`[Decoder.GIF Start] ${image}`)
       let decoder = new GIFDecoder()
       decoder.on('error', onError)
       image.stream.pipe(decoder)
@@ -18,7 +18,7 @@ export default class GIF {
     })
 
     image.raw = frames[0]
-    console.log(`[Decoder.GIF End] ${image.url}`)
+    console.log(`[Decoder.GIF End] ${image}`)
 
     return image
   }

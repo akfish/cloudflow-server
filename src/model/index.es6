@@ -74,7 +74,13 @@ async function getAllStations () {
       .value()
   }
 
-  all.forEach((station) => station.images = images[station.url])
+  all.forEach((station) => {
+    station.images = images[station.url]
+    station.images.forEach((image) => {
+      image.station = station.name
+      image.station_cn = station.name_cn
+    })
+  })
 
   return all
 }
@@ -104,15 +110,20 @@ export class Image extends Model {
     return img
   }
   async load () {
-    console.log(`[Loading] ${this.url}`)
+    console.log(`[Loading] ${this}`)
     let res = await fetch(this.url, getOptions())
 
     this.stream = res.body
 
     console.assert(this.stream._readableState.length > 0, 'Empty response')
 
-    console.log(`[Loaded] ${this.url}`)
+    console.log(`[Loaded] ${this}`)
 
     return this
+  }
+
+  toString () {
+    let { station_cn, YYYY, MM, DD, HH, mm } = this
+    return `${station_cn} ${YYYY}/${MM}/${DD} ${HH}:${mm}`
   }
 }

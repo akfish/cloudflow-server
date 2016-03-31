@@ -148,7 +148,7 @@ export default class Processor {
     _.bindAll(this, 'processOne', 'process')
   }
   async processOne (image) {
-    console.log(`[Processing] ${image.url}`)
+    console.log(`[Processing] ${image}`)
     let raw = image.raw
     let frame = image.frame = new Frame(raw).crop()
     let { data, grid } = frame.reindex()
@@ -157,8 +157,8 @@ export default class Processor {
     image.grid = grid
 
     image.patched = (data && grid) ? data.patch(grid) : null
-    if (!data) console.log(`[Process] SKIP ${image.url} appears to be empty`)
-    console.log(`[Processed] ${image.url}`)
+    if (!data) console.log(`[Process] SKIP ${image} appears to be empty`)
+    console.log(`[Processed] ${image}`)
 
     return image
   }

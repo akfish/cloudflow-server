@@ -8,28 +8,28 @@ export default class GIF {
     let frame = image[key]
     let { dir, name } = image.file
     let output = path.join(dir, `${name}-${key}.gif`)
-    if (!frame) {
-      console.log(`[Encoder.GIF] SKIP ${output}`)
-      return
-    }
-    let { palette, width, height, pixels } = frame
-
-    let indexed = pixels
-
-    if (frame.colorSpace !== 'indexed' || pixels.length !== width * height) {
-      let q = neuquant.quantize(pixels)
-      palette = q.palette
-      indexed = q.indexed
-    }
 
     return new Promise((resolve, reject) => {
+      if (!frame) {
+        console.log(`[Encoder.GIF] SKIP ${image}:${key}`)
+        return resolve()
+      }
+      let { palette, width, height, pixels } = frame
+
+      let indexed = pixels
+
+      if (frame.colorSpace !== 'indexed' || pixels.length !== width * height) {
+        let q = neuquant.quantize(pixels)
+        palette = q.palette
+        indexed = q.indexed
+      }
       let enc = new GIFEncoder(frame.width, frame.height, { palette })
       let outputStream = storage.createWriteStream(output)
       enc.pipe(outputStream)
       enc.end(indexed)
       outputStream.on('error', reject)
       outputStream.on('finish', () => {
-        console.log(`[Encoder.GIF] ${output}`)
+        console.log(`[Encoder.GIF] ${image}:${key}`)
         resolve()
       })
     })

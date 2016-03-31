@@ -34,9 +34,12 @@ export default class FileStorage {
     this.resolve(image)
     await mkdirp(image.file.dir)
     await Promise.map(image.encoders, (encode) => encode(this, image))
+      .timeout(3000, new Error(`Write ${image} timeout`))
+    console.log(`[storage] written ${image}`)
     return image
   }
   async write (images) {
     return await Promise.map(images, this.writeOne.bind(this))
+      .then(() => console.log(`[storage] written ${images.length} images`))
   }
 }
