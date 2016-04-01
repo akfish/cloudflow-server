@@ -1,4 +1,5 @@
 export { default as GIF } from './gif'
+export { default as LZW } from './lzw'
 
 export function encodeWith (key, encoder) {
   return (image) => {

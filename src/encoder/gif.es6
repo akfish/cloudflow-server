@@ -12,9 +12,9 @@ export default class GIF {
     let output = path.join(dir, `${name}-${key}.gif`)
 
     return new Promise((resolve, reject) => {
-      log.encode('begin', `${image}:${key}`)
+      log.encode('begin.gif', `${image}:${key}`)
       if (!frame) {
-        log.encode('skip', `${image}:${key}`)
+        log.encode('skip.gif', `${image}:${key}`)
         return resolve()
       }
       let { palette, width, height, pixels } = frame
@@ -32,7 +32,7 @@ export default class GIF {
       enc.end(indexed)
       outputStream.on('error', reject)
       outputStream.on('finish', () => {
-        log.encode('end', `${image}:${key}`)
+        log.encode('end.gif', `${image}:${key}`)
         resolve()
       })
     })

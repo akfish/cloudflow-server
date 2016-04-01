@@ -26,6 +26,7 @@
     "concat-frames": "^1.0.3",
     "gif-stream": "^1.1.0",
     "graceful-fs": "^4.1.3",
+    "lzw-stream": "^1.0.0",
     "mkdirp": "^0.5.1",
     "neuquant": "^1.0.2",
     "node-fetch": "^1.4.1",
