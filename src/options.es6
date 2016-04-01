@@ -2,7 +2,8 @@ import _ from 'underscore'
 
 export const DEFAULT_OPTIONS = {
   retry: 5,
-  timeout: 5000
+  timeout: 5000,
+  logger: 'verbose'
 }
 
 var opts = null

@@ -1,4 +1,8 @@
+import Promise from 'bluebird'
 import _ from 'underscore'
+import Logger from './logger'
+
+const log = Logger.get()
 
 function identity (m) { return m }
 
@@ -25,13 +29,6 @@ export function matchAll (r, text, transform, Model) {
   return matches
 }
 
-export function streamToPromise (stream) {
-  return new Promise((resolve, reject) => {
-    stream.on("end", resolve)
-    stream.on("error", reject)
-  })
-}
-
 export function cropPixels (pixels, w, h, rect, dimension = 3) {
   // Assume frame.colorSpace === 'rgb'
   let [ left, top, width, height ] = rect
@@ -48,13 +45,16 @@ export async function retry (fn, count) {
 
   if (count === 0) return await fn()
 
+  let promise = null
   while (tried < count) {
     try {
-      if (tried > 0) console.log(`Retry ${tried}/${count}`)
-      return await fn()
+      if (promise != null) promise.cancel()
+      if (tried > 0) log.warn('retry', `${tried}/${count}`)
+      promise = Promise.resolve(fn())
+      return await promise
     } catch (e) {
       tried++
-      console.error(`[Error] `, e)
+      log.error('', e.message)
     }
   }
 

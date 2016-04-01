@@ -2,6 +2,8 @@ import Promise from 'bluebird'
 import GIFEncoder from 'gif-stream/encoder'
 import neuquant from 'neuquant'
 import path from 'path'
+import Logger from '../logger'
+const log = Logger.get()
 
 export default class GIF {
   static encode (key, storage, image) {
@@ -10,8 +12,9 @@ export default class GIF {
     let output = path.join(dir, `${name}-${key}.gif`)
 
     return new Promise((resolve, reject) => {
+      log.encode('begin', `${image}:${key}`)
       if (!frame) {
-        console.log(`[Encoder.GIF] SKIP ${image}:${key}`)
+        log.encode('skip', `${image}:${key}`)
         return resolve()
       }
       let { palette, width, height, pixels } = frame
@@ -29,7 +32,7 @@ export default class GIF {
       enc.end(indexed)
       outputStream.on('error', reject)
       outputStream.on('finish', () => {
-        console.log(`[Encoder.GIF] ${image}:${key}`)
+        log.encode('end', `${image}:${key}`)
         resolve()
       })
     })

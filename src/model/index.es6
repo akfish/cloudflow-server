@@ -4,6 +4,8 @@ import { URL, REGEX } from '../consts'
 import { matchAll, retry } from '../util'
 import { getOptions } from '../options'
 import _ from 'underscore'
+import Logger from '../logger'
+const log = Logger.get()
 const fs = Promise.promisifyAll(require('graceful-fs'))
 
 export function tryFetchText (url, opts) {
@@ -35,13 +37,13 @@ function parseStations (text) {
 }
 
 async function fetchPage (url) {
-  console.log(`[Fecth] ${url}`)
+  log.fetch('begin', url)
   let text = await tryFetchText(url, getOptions())
 
-  console.log(`[Fetched] ${url}`)
+  log.fetch('end', url)
   let stations = parseStations(text)
   let images = parseImages(text)
-  console.log(`[Parse] ${stations.length} stations, ${images.length} images`)
+  log.parse('done', `${stations.length} stations, ${images.length} images`)
   return { url, stations, images }
 }
 
@@ -51,8 +53,13 @@ async function getAllStations () {
   let images = {}
   let all = []
 
+  let queued = 1
+  let resolved = 0
+
+  log.progress('stations', 0, 1)
   while (queue.length > 0) {
     let pages = await Promise.map(queue, fetchPage)
+
     let stations = _.chain(pages)
       .each(({url, images: imgs}) => {
         // Mark visited
@@ -72,6 +79,9 @@ async function getAllStations () {
       .filter(({url}) => !visited[url])
       .pluck('url')
       .value()
+    resolved += pages.length
+    queued += queue.length
+    log.progress('stations', pages.length, queue.length)
   }
 
   all.forEach((station) => {
@@ -81,6 +91,8 @@ async function getAllStations () {
       image.station_cn = station.name_cn
     })
   })
+
+  log.finish('stations')
 
   return all
 }
@@ -110,14 +122,14 @@ export class Image extends Model {
     return img
   }
   async load () {
-    console.log(`[Loading] ${this}`)
+    log.fetch('begin', `${this}`)
     let res = await fetch(this.url, getOptions())
 
     this.stream = res.body
 
     console.assert(this.stream._readableState.length > 0, 'Empty response')
 
-    console.log(`[Loaded] ${this}`)
+    log.fetch('end', `${this}`)
 
     return this
   }

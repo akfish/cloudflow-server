@@ -1,5 +1,8 @@
 import Promise from 'bluebird'
 import _ from 'underscore'
+import Logger from '../logger'
+
+const log = Logger.get()
 
 export default class Delta {
   constructor (storage) {
@@ -13,16 +16,11 @@ export default class Delta {
       .flatten()
       .value()
 
-    let checked = 0
+    log.info('', `Listed ${images.length} images`)
+
     return Promise.filter(images, async (image) => {
-      try {
-        let exists = await storage.exists(image)
-        checked++
-        return !exists
-      } catch (e) {
-        console.log(checked)
-        throw e
-      }
+      let exists = await storage.exists(image)
+      return !exists
     }, { concurrency: 10 })
   }
 }

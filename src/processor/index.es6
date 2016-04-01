@@ -6,6 +6,8 @@ import ConcatFrames from 'concat-frames'
 import { cropPixels } from '../util'
 import { ROI, PALETTE, PALETTE_BUFFER } from '../consts'
 import _ from 'underscore'
+import Logger from '../logger'
+const log = Logger.get()
 
 class Frame {
   constructor (...args) {
@@ -148,7 +150,7 @@ export default class Processor {
     _.bindAll(this, 'processOne', 'process')
   }
   async processOne (image) {
-    console.log(`[Processing] ${image}`)
+    log.process('begin', `${image}`)
     let raw = image.raw
     let frame = image.frame = new Frame(raw).crop()
     let { data, grid } = frame.reindex()
@@ -157,8 +159,8 @@ export default class Processor {
     image.grid = grid
 
     image.patched = (data && grid) ? data.patch(grid) : null
-    if (!data) console.log(`[Process] SKIP ${image} appears to be empty`)
-    console.log(`[Processed] ${image}`)
+    if (!data) log.process('skip', `${image} appears to be empty`)
+    log.process('end', `${image}`)
 
     return image
   }

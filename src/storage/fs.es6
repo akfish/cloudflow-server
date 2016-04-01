@@ -5,6 +5,8 @@ import path from 'path'
 import { retry } from '../util'
 const fs = Promise.promisifyAll(require('graceful-fs'))
 const mkdirp = Promise.promisify(require('mkdirp'))
+import Logger from '../logger'
+const log = Logger.get()
 
 export default class FileStorage {
   constructor (base = __dirname) {
@@ -31,15 +33,16 @@ export default class FileStorage {
     }
   }
   async writeOne (image) {
+    log.storage('begin', `${image}`)
     this.resolve(image)
     await mkdirp(image.file.dir)
     await Promise.map(image.encoders, (encode) => encode(this, image))
-      .timeout(3000, new Error(`Write ${image} timeout`))
-    console.log(`[storage] written ${image}`)
+      // .timeout(3000, new Error(`Write ${image} timeout`))
+    log.storage('end', `${image}`)
     return image
   }
   async write (images) {
     return await Promise.map(images, this.writeOne.bind(this))
-      .then(() => console.log(`[storage] written ${images.length} images`))
+      .then(() => log.storage('all', `written ${images.length} images`))
   }
 }
