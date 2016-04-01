@@ -130,15 +130,17 @@ class Frame {
         if (N === 0 && E === 0 && W === 0 && S === 0) continue
         if (N >= 16 && E >= 16 && W >= 16 && S >= 16) continue
 
-        let fix = 0
-        let count = 0
-        N8.forEach((n, i) => {
-          if (n >= 16) return
-          fix += n
-          count++
-        })
-
-        patched[i] = Math.ceil(fix / (count > 0 ? count : 1))
+        // let fix = 0
+        // let count = 0
+        // N8.forEach((n, i) => {
+        //   if (n >= 16) return
+        //   fix += n
+        //   count++
+        // })
+        //
+        // patched[i] = Math.ceil(fix / (count > 0 ? count : 1))
+        let Nx = N8.filter((n) => n > 0).sort()
+        patched[i] = Nx[Math.ceil(Nx.length / 2)]
       }
     }
     return new Frame(_.extend({ pixels: patched }, _.omit(this, 'pixels')))
