@@ -40,23 +40,30 @@ export function cropPixels (pixels, w, h, rect, dimension = 3) {
   return Buffer.concat(strides)
 }
 
-export async function retry (fn, count) {
-  let tried = 0
-
-  if (count === 0) return await fn()
-
-  let promise = null
-  while (tried < count) {
-    try {
-      if (promise != null) promise.cancel()
-      if (tried > 0) log.warn('retry', `${tried}/${count}`)
-      promise = Promise.resolve(fn())
-      return await promise
-    } catch (e) {
-      tried++
-      log.error('', e.message)
-    }
-  }
-
-  throw new Error('Maxiumum retry count exceeded')
+export function retry (fn, count, tried = 0) {
+  if (count === 0) return fn()
+  if (tried >= count) throw new Error('Maxiumum retry count exceeded')
+  if (tried > 0) log.warn('retry', `${tried}/${count}`)
+  return new Promise((resolve, reject) => {
+    Promise.resolve(fn()).then(resolve)
+      .catch((e) => {
+        log.error('', e.message)
+        resolve(retry(fn, count, tried + 1))
+      })
+  })
 }
+
+// export async function retry (fn, count, tried = 0) {
+//   if (count === 0) return await fn()
+//   if (tried >= count) throw new Error('Maxiumum retry count exceeded')
+//
+//   if (tried > 0) log.warn('retry', `${tried}/${count}`)
+//   let promise = Promise.resolve(fn())
+//   try {
+//     let ret = await promise
+//     return ret
+//   } catch (e) {
+//     log.error('', e.message)
+//     return retry (fn, count, tried + 1)
+//   }
+// }

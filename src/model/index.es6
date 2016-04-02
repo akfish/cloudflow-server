@@ -104,19 +104,19 @@ class Model {
 }
 
 export class Station extends Model {
-  static async listAll () {
+  static listAll () {
     return getAllStations()
   }
-  static async list (url) {
+  static list (url) {
     return fetchPage(url)
   }
 }
 
 export class Image extends Model {
-  static async load (url) {
+  static load (url) {
     return new Image({ url }).load()
   }
-  static async loadFromFile (file) {
+  static loadFromFile (file) {
     let img = new Image({ url: file })
     img.stream = fs.createReadStream(file)
     return img
@@ -127,7 +127,7 @@ export class Image extends Model {
 
     this.stream = res.body
 
-    console.assert(this.stream._readableState.length > 0, 'Empty response')
+    console.assert(this.stream._readableState.length > 0, `Empty response ${this}`)
 
     log.fetch('end', `${this}`)
 

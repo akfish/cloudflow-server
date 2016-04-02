@@ -18,9 +18,12 @@ export default class Delta {
 
     log.info('', `Listed ${images.length} images`)
 
+    log.progress('delta', 0, images.length)
     return Promise.filter(images, async (image) => {
       let exists = await storage.exists(image)
+      log.progress('delta', 1)
       return !exists
     }, { concurrency: 10 })
+      .tap(() => log.finish('delta'))
   }
 }
