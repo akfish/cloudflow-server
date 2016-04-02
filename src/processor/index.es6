@@ -41,6 +41,8 @@ class Frame {
     let data = new Buffer(pixels.length / 3)
     let grid = new Buffer(pixels.length / 3)
 
+    this.hist = new Uint32Array(16)
+
     for (var i = 0; i < pixels.length; i += 3) {
       let r = pixels[i]
       let g = pixels[i + 1]
@@ -59,6 +61,7 @@ class Frame {
           top = Math.min(top, y)
           bottom = Math.max(bottom, y)
         }
+        this.hist[j]++
 
         data.writeUInt8(j, i / 3)
         grid.writeUInt8(0, i / 3)
@@ -145,6 +148,20 @@ class Frame {
     }
     return new Frame(_.extend({ pixels: patched }, _.omit(this, 'pixels')))
   }
+
+  threshold (values) {
+    let { height, width, pixels } = this
+    let data = values.map(() => new Buffer(pixels.length))
+
+    for (let i = 0; i < pixels.length; i++) {
+      let v = pixels[i]
+      data.forEach((d, j) => {
+        d[i] = v >= values[j] ? 1 : 0
+      })
+    }
+
+    return data.map((d) => new Frame(_.extend({ pixels: d }, _.omit(this, 'pixels'))))
+  }
 }
 
 export default class Processor {
@@ -157,10 +174,19 @@ export default class Processor {
     let frame = image.frame = new Frame(raw).crop()
     let { data, grid } = frame.reindex()
 
+
     image.data = data
     image.grid = grid
 
     image.patched = (data && grid) ? data.patch(grid) : null
+
+    let nonEmptyChannels = _.chain(frame.hist)
+      .pick((v, k) => v > 0 && k > 0)
+      .keys()
+      .value()
+    image.patched.threshold(nonEmptyChannels)
+      .forEach((ch, i) => image[`ch${nonEmptyChannels[i]}`] = ch)
+
     if (!data) log.process('skip', `${image} appears to be empty`)
     log.process('end', `${image}`)
 
