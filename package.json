@@ -4,6 +4,7 @@
   "description": "",
   "main": "lib/index.js",
   "scripts": {
+    "postinstall": "gulp clean && gulp es6",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

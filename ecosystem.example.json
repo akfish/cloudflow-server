@@ -1,0 +1,39 @@
+{
+  "apps" : [
+    {
+      "name": "CloudFlow Master",
+      "script": "lib/app/master.js",
+    },
+    {
+      "name": "CloudFlow Fetcher",
+      "script": "lib/app/fetcher.js",
+    },
+    {
+      "name": "CloudFlow Processor",
+      "script": "lib/app/processor.js",
+      "exec_mode": "cluster"
+    },
+    {
+      "name": "CloudFlow Deployer",
+      "script": "lib/app/deployer.js"
+    }
+  ],
+  "deploy" : {
+    "production": {
+      "user" : "node",
+      "host" : "hosts",
+      "ref"  : "origin/master",
+      "repo" : "git@github.com:akfish/cloudflow-server.git",
+      "path" : "/var/www/production",
+      "post-deploy" : "npm install && pm2 startOrRestart ecosystem.json --env production",
+    },
+    "dev": {
+      "user" : "node",
+      "host" : "hosts",
+      "ref"  : "origin/master",
+      "repo" : "git@github.com:akfish/cloudflow-server.git",
+      "path" : "/var/www/production",
+      "post-deploy" : "npm install && pm2 startOrRestart ecosystem.json --env dev"
+    }
+  }
+}
