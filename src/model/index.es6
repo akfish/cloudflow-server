@@ -7,6 +7,7 @@ import _ from 'underscore'
 import Logger from '../logger'
 const log = Logger.get()
 const fs = Promise.promisifyAll(require('graceful-fs'))
+import path from 'path'
 
 export function tryFetchText (url, opts) {
   let { retry: maxRetry, timeout } = opts = _.defaults({}, opts, { retry: 0, timeout: 0 })
@@ -58,7 +59,7 @@ async function getAllStations () {
 
   log.progress('stations', 0, 1)
   while (queue.length > 0) {
-    let pages = await Promise.map(queue, fetchPage)
+    let pages = await Promise.map(queue, fetchPage, { concurrency: 5 })
 
     let stations = _.chain(pages)
       .each(({url, images: imgs}) => {
@@ -131,6 +132,36 @@ export class Image extends Model {
 
     log.fetch('end', `${this}`)
 
+    return this
+  }
+  cache (storage) {
+    log.fetch('begin.cache', `${this}`)
+    let fetchStream = fetch(this.url, getOptions())
+      .then((res) => {
+        let stream = res.body
+        // console.assert(stream._readableState.length > 0, `Empty response ${this}`)
+        return stream
+      })
+    return Promise.all([
+      fetchStream,
+      storage.createImageWriteStream(this)
+    ]).spread((sourceStream, outputStream) => {
+      return new Promise((resolve, reject) => {
+        outputStream.on('error', reject)
+        outputStream.on('finish', () => {
+          this.cached = outputStream.path
+          log.fetch('end.cache', `${this}`)
+          resolve(this)
+        })
+        sourceStream.pipe(outputStream)
+      }).timeout(30000, 'Write timeout')
+    })
+  }
+
+  loadFromCache (storage) {
+    let { dir, name } = this.file
+    let cached = path.join(dir, `${name}.gif`)
+    this.stream = storage.createReadStream(cached)
     return this
   }
 

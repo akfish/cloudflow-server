@@ -96,6 +96,52 @@ export default class Frame {
     return { data: dataFrame, grid: gridFrame }
   }
 
+  reindex0 () {
+    let { palette, pixels, width, height } = this
+    let left = width
+    let top = height
+    let right = 0
+    let bottom = 0
+
+    let indexed = new Buffer(pixels.length / 3)
+
+
+    for (var i = 0; i < pixels.length; i += 3) {
+      let r = pixels[i]
+      let g = pixels[i + 1]
+      let b = pixels[i + 2]
+      let v = r << 16 | g << 8 | b
+      let j = PALETTE.indexOf(v)
+      let x = i / 3 % width
+      let y = ~~ (i / 3 / width)
+      console.assert(j >= 0, `Unknown color: ${r}, ${g}, ${b} at (${x}, ${y})`)
+      indexed.writeUInt8(j, i / 3)
+      if (j > 0 && j < 16) {
+        // update bounding box
+        left = Math.min(left, x)
+        right = Math.max(right, x)
+        top = Math.min(top, y)
+        bottom = Math.max(bottom, y)
+
+      }
+    }
+
+    // No pixels
+    if (left === width) left = 0
+    if (top === height) top = 0
+    let roi = [left, top, right - left, bottom - top]
+
+    this.colorSpace = 'indexed'
+    this.pixels = cropPixels(indexed, width, height, roi, 1)
+    this.palette = PALETTE_BUFFER
+    this.left = roi[0]
+    this.top = roi[1]
+    this.width = roi[2]
+    this.height = roi[3]
+
+    return this
+  }
+
   patch (maskFrame) {
     console.assert(maskFrame.width === this.width && maskFrame.height === this.height)
     console.assert(maskFrame.colorSpace === this.colorSpace)
@@ -156,5 +202,101 @@ export default class Frame {
     }
 
     return data.map((d) => new Frame(_.extend({ pixels: d }, _.omit(this, 'pixels'))))
+  }
+
+  marchingSquare () {
+    let { height, width, pixels } = this
+    let data = new Uint8Array(pixels.length)
+    let corners = []
+    // Find all corners
+    for (let y = 0; y < height - 1; y++) {
+      for (let x = 0; x < width - 1; x++) {
+        let i = y * width + x
+        let code = pixels[i]
+        code = (code << 1) | pixels[i + 1]
+        code = (code << 1) | pixels[i + 1 + width]
+        code = (code << 1) | pixels[i + width]
+
+        let N8 = [
+          pixels[(y - 1) * width + x - 1],
+          pixels[(y - 1) * width + x],
+          pixels[(y - 1) * width + x + 1],
+          pixels[y * width + x + 1],
+          pixels[(y + 1) * width + x + 1],
+          pixels[(y + 1) * width + x],
+          pixels[(y + 1) * width + x - 1],
+          pixels[y * width + x - 1]
+        ]
+        let [NW, N, NE, E, SE, S, SW, W] = N8
+        if (N === 0 && E === 0 && W === 0 && S === 0) continue
+        data[i] = code
+        if (code > 0 && code < 15) corners.push(i)
+      }
+    }
+    const WALKED = 0x10
+    // Connect contours
+    let contours = []
+    let index = 0
+    let walked = new Uint8Array(pixels.length)
+
+    function walk (entry) {
+      let i = entry
+      let contour = []
+      let finished = false
+      while (!finished) {
+        contour.push(i)
+        walked[i] = 1
+        let x = i % width
+        let y = ~~ (i / width)
+        let I8 = [
+          x < 1 || y < 1                          ? -1 : (y - 1) * width + x - 1,
+                   y < 1                          ? -1 : (y - 1) * width + x,
+          y < 1 || x >= width - 1                 ? -1 : (y - 1) * width + x + 1,
+          x >= width - 1                          ? -1 : y * width + x + 1,
+          x >= width - 1 || y >= height - 1       ? -1 : (y + 1) * width + x + 1,
+          y >= height - 1                         ? -1 : (y + 1) * width + x,
+          x < 1 || y >= height - 1                ? -1 : (y + 1) * width + x - 1,
+          x < 1                                   ? -1 : y * width + x - 1
+        ]
+        let updated = false
+        for (let j = 0; j < I8.length; j++) {
+          if (j < 0) continue
+          let next = I8[j]
+          let code = data[next]
+          let w = walked[next]
+          // Closed
+          // if (next === entry) {
+          //   finished = true
+          //   break
+          // }
+          // Already walked
+          if (w) continue
+          // Next corner
+          if (code > 0 && code < 15) {
+            updated = true
+            i = next
+            break
+          }
+        }
+        if (!updated) break
+      }
+      return contour
+    }
+
+    while (index < corners.length) {
+      let entry = corners[index]
+      let code = data[entry]
+      let w = walked[entry]
+      if (!w) {
+        contours.push(walk(entry))
+      }
+      index++
+    }
+
+
+    let f = new Frame(_.extend({ pixels: new Buffer(data) }, _.omit(this, 'pixels')))
+    f.contours = contours
+    console.log(contours.length)
+    return f
   }
 }

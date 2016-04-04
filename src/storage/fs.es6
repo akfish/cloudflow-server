@@ -13,18 +13,31 @@ export default class FileStorage {
     this.base = base
     _.bindAll(this, 'createWriteStream', 'exists', 'writeOne')
   }
+  createImageWriteStream (image) {
+    this.resolve(image)
+    let { dir, name } = image.file
+    let output = path.join(dir, `${name}.gif`)
+    return mkdirp(dir)
+      .then(() => fs.createWriteStream(output))
+  }
+  createReadStream (filename) {
+    return fs.createReadStream(filename)
+  }
   createWriteStream (filename) {
     return fs.createWriteStream(filename)
+  }
+  writeFile (...args) {
+    return fs.writeFileAsync(...args)
   }
   resolve (image) {
     if (typeof image.file === 'object') return
     let file = path.parse(path.join(this.base, url.parse(image.url).pathname))
     image.file = file
   }
-  async exists (image) {
+  async exists (image, surfix = '') {
     this.resolve(image)
     let { dir, name } = image.file
-    let output = path.join(dir, `${name}-frame.gif`)
+    let output = path.join(dir, `${name}${surfix}.gif`)
     try {
       let stat = await fs.statAsync(output)
       return stat.isFile()
